@@ -3,6 +3,9 @@
 use feature ':5.10';
 use IO::Socket::INET;
 
+my $running = 1;
+$SIG{INT} = sub { $running = 0 };
+
 if ($#ARGV != 1) {
   say "usage: ./tcp ip port";
   exit;
@@ -23,6 +26,22 @@ die "unable to connect to $dst_ip $dst_port" unless $socket;
 
 say "connected -> ($dst_ip:$dst_port)";
 
+my $pid = fork();
+die if not defined $pid;
+if (not $pid) {
+  while ($running) {
+    my $res = "";
+    $socket->recv($res, 1);
+    print "$res";
+  }
+  exit;
+}
 
+while ($running) {
+  my $in = <STDIN>;
+  $socket->send($in);
+}
+
+wait();
 $socket->close();
-say "disconnected";
+say "\ndisconnected";

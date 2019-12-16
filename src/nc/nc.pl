@@ -37,16 +37,14 @@ if (not $pid) {
   exit;
 }
 
-sub parse_input {
-  my $in = $_[0];
-  if ($in =~ m/:s/) {
-    return substr($in, 2, length $in);
-  }
-}
-
 while ($running) {
   my $in = <STDIN>;
-  $socket->send($in);
+  if ($in =~ m/:s /) {
+    $socket->send(substr($in, 3));
+  }
+  if ($in =~ m/:x /) {
+    $socket->send(pack("H*", substr($in, 3, -1)));
+  }
 }
 
 wait();

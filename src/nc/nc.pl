@@ -58,7 +58,7 @@ while ($running) {
   my $val = substr $in, 3, -1;
   switch($in) {
     case /\:s / {
-      $socket->send(substr $in, 3);
+      $socket->send($');
     }
     case /\:x / {
       $socket->send(pack "H*", $val);
@@ -69,7 +69,6 @@ while ($running) {
     case /\:h / {
       $socket->send(pack "H*", read_file($val));
     }
-
   }
 }
 

@@ -2,6 +2,7 @@
 
 use feature ':5.10';
 use IO::Socket::INET;
+use Switch;
 
 my $running = 1;
 $SIG{INT} = sub { $running = 0 };
@@ -37,13 +38,38 @@ if (not $pid) {
   exit;
 }
 
+sub read_file {
+  open my $fh, '<:raw', $_[0]
+    or die "unable to open file $_[0]";
+
+  my $cont ='';
+  while (1) {
+    my $success = read $fh, $cont, 100, length($cont);
+    die $! if not defined $success;
+    last if not $success;
+  }
+  close $fh; 
+  return $cont
+}
+
 while ($running) {
   my $in = <STDIN>;
-  if ($in =~ m/:s /) {
-    $socket->send(substr($in, 3));
-  }
-  if ($in =~ m/:x /) {
-    $socket->send(pack("H*", substr($in, 3, -1)));
+
+  my $val = substr $in, 3, -1;
+  switch($in) {
+    case /\:s / {
+      $socket->send(substr $in, 3);
+    }
+    case /\:x / {
+      $socket->send(pack "H*", $val);
+    }
+    case /\:f / {
+      $socket->send(read_file($val));
+    }
+    case /\:h / {
+      $socket->send(pack "H*", read_file($val));
+    }
+
   }
 }
 
